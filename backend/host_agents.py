@@ -1,6 +1,7 @@
 from uagents import Model, Agent, Context, Bureau
 from typing import Dict, Any
 import google.generativeai as genai
+import os
 
 # Class for the emotion
 class Emotion(Model):
@@ -31,6 +32,7 @@ async def startup(ctx: Context):
 # Output: A feedback message for the host 
 @audience_feedback_agent.on_query(model=Emotion)
 async def audience_feedback_query(ctx: Context, emotion: Emotion):
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
     model = genai.GenerativeModel(
             'models/gemini-1.5-pro-latest'
         )
