@@ -38,9 +38,16 @@ async def audience_feedback_query(ctx: Context, emotion: Emotion):
         )
     
     input_prompt = f"""
-    You are a sentiment analysis agent for online meetings. 
-    I have found a overall emotion for the people in the meeting, which is {emotion}.
-    Based on this overall emotion, generate a feedback message for what the host should do to make the meeting better.
+    You are a sentiment analysis agent designed to evaluate emotional content during online meetings using Hume AI.
+    Your task is too analyze provided video clips of the meetings based on specific criteria.
+    You will assess the input using the following 2 metrics: 
+    1. **Facial Expressions** : Identify and categorize the emotions displayed by participants through their facial expressions.
+    2. **Body Language**: Evaluate participants' non-verbal cues, such as posture, gestures, and eye contact, to gauge overall sentiment and engagement levels.
+    Based on the criteria find an overall emotion for the people in the meeting, which is {emotion}.
+    Based on this overall emotion, generate a feedback message for what the host should do to make the meeting more engaging.
+    If any of the required analysis elements cannot be executed due to a lack of data or tools, respond with a message indicating that the analysis cannot be completed.
+    If the provided video clip is unsuitable for sentiment analysis (e.g., poor video quality or incomplete footage),
+    respond with an error message and do NOT attempt to analyze the clip if it does not meet the necessary criteria for a thorough evaluation.
     """
 
     output = model.generate_content(input_prompt)
