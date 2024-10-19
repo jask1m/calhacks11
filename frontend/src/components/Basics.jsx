@@ -10,11 +10,11 @@ import {
 } from "agora-rtc-react";
 import React, { useState } from "react";
 export const Basics = () => {
+  const appId = import.meta.env.VITE_AGORA_APP_ID;
+  const token = import.meta.env.VITE_AGORA_APP_TOKEN;
   const [calling, setCalling] = useState(false);
   const isConnected = useIsConnected(); // Store the user's connection status
-  const [appId, setAppId] = useState("");
   const [channel, setChannel] = useState("");
-  const [token, setToken] = useState("");
 
   useJoin({appid: appId, channel: channel, token: token ? token : null}, calling);
 
@@ -59,21 +59,9 @@ export const Basics = () => {
           <div className="flex flex-col items-center p-6 bg-white border border-gray-300 rounded-lg">
             <input
               className="my-2 p-2 w-72 border border-gray-300 rounded"
-              onChange={e => setAppId(e.target.value)}
-              placeholder="<Your app ID>"
-              value={appId}
-            />
-            <input
-              className="my-2 p-2 w-72 border border-gray-300 rounded"
               onChange={e => setChannel(e.target.value)}
               placeholder="<Your channel Name>"
               value={channel}
-            />
-            <input
-              className="my-2 p-2 w-72 border border-gray-300 rounded"
-              onChange={e => setToken(e.target.value)}
-              placeholder="<Your token>"
-              value={token}
             />
             <button
               className={`mt-4 px-4 py-2 rounded ${
