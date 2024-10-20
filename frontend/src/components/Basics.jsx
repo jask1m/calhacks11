@@ -111,6 +111,7 @@ export const Basics = () => {
     startTranscription();
   }, [isConnected, builderToken]);
 
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-4xl">
@@ -190,4 +191,3 @@ export const Basics = () => {
 };
 
 export default Basics;
-// U1hyQUPyr1hDB59gaWhYIDxsAs8Bx2cySMPcRakb3Uh5CogqyLSIUKkNwEeIXL6HuTZUHdJG97eSl3UP4KDX49OD7LwcsWTyZUqS03bjVfl5QOOYzzecOk5qW7Fd9R523nLfQG3Yq561yzqapNeJHXGL-F5Z9MLv4-ejrN2_OFjozg_MIhk4XqyA0eyN-WYkdZBgXxGCRUVU7d6oYB1N9S4W_Pe10vPUnwaR5g2_6Vg
