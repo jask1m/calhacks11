@@ -10,11 +10,11 @@ import {
 import AgoraRTC, { AgoraRTCProvider } from "agora-rtc-react";
 import RootLayout from './layouts/root-layout'
 import DashboardLayout from './layouts/dashboard-layout'
-import IndexPage from './routes/Index'
+import IndexPage from './routes'
 import ContactPage from './routes/contact'
 import SignInPage from './routes/sign-in'
 import SignUpPage from './routes/sign-up'
-import DashboardPage from './routes/Dashboard'
+import DashboardPage from './routes/dashboard'
 import './index.css'
 
 const router = createBrowserRouter([
