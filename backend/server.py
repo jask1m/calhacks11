@@ -1,5 +1,5 @@
 import json
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from uagents import Model
 from uagents.query import query
@@ -9,6 +9,9 @@ from pydantic import BaseModel
 import os
 import uvicorn
 from dotenv import load_dotenv
+from vectorDB import create_and_insert_embeddings
+from confluent_kafka import Producer, KafkaError
+
 
 load_dotenv()
 
@@ -20,6 +23,22 @@ database = os.getenv('S2_DATABASE')
 
 connection_string = f"{username}:{password}@{host}:{port}/{database}"
 conn = s2.connect(connection_string)
+
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            await connection.send_text(message)
 
 class User(BaseModel):
     user_id: int
@@ -40,6 +59,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+manager = ConnectionManager()
+
+# Kafka producer configuration
+producer_conf = {
+    'bootstrap.servers': 'localhost:9092',
+    'client.id': 'transcription-producer'
+}
+
+producer = Producer(producer_conf)
+
+def delivery_report(err, msg):
+    """ Callback to handle success or failure of message delivery """
+    if err is not None:
+        print(f"Message delivery failed: {err}")
+    else:
+        print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()  # Transcription message
+            print(f"Message received: {data}")
+            # Produce Kafka message
+            producer.produce('transcription-topic', data.encode('utf-8'), callback=delivery_report)
+            producer.flush()  # Ensure the message is delivered to Kafka
+            await websocket.send_text(f"Message received and sent to Kafka.")
+    except WebSocketDisconnect:
+        print("Client disconnected")
 
 @app.get("/")
 def read_root():
@@ -68,7 +118,6 @@ async def create_user(user: User):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
-if __name__ == "main":
+if __name__ == "__main__":
     uvicorn.run("server:app", port=8000, reload=True)
 
