@@ -5,6 +5,7 @@ from meeting_agents import vector_search_agent
 from uagents import Context
 from dotenv import load_dotenv
 from openai import OpenAI
+import struct
 
 load_dotenv()
 
@@ -31,11 +32,26 @@ def test_embeddings(text, model="text-embedding-ada-002"):
     )
     
     # Extract the embeddings from the response
-    print(response.data[0].embedding)
+    vector_embeddings = response.data[0].embedding
+
+    vector_embeddings_blob = struct.pack(f'{len(vector_embeddings)}f', *vector_embeddings)
+
+    insert_to_vector_query = """
+        INSERT INTO myvectortable (text, vector) VALUES (%s, %s);
+    """
+
+    # Insert the text and the vector embeddings into the vector database
+    with conn.cursor() as cur:
+        cur.execute(insert_to_vector_query, (text, vector_embeddings_blob))
+        conn.commit()
+
+    return response.data[0].embedding
     
 
 def create_and_insert_embeddings(text, model="text-embedding-ada-002"):   
-    client = OpenAI()
+    client = OpenAI(
+        api_key=os.environ.get("OPEN_AI_API_KEY"),
+    )
     tokens = tokenizer.encode(text)
     tokenized_text = tokenizer.decode(tokens)
 
@@ -47,7 +63,7 @@ def create_and_insert_embeddings(text, model="text-embedding-ada-002"):
     
     vector_embeddings = response.data[0].embedding
 
-    print(vector_embeddings)
+    vector_embeddings_blob = struct.pack(f'{len(vector_embeddings)}f', *vector_embeddings)
 
     insert_to_vector_query = """
         INSERT INTO myvectortable (text, vector) VALUES (%s, %s);
@@ -55,12 +71,12 @@ def create_and_insert_embeddings(text, model="text-embedding-ada-002"):
 
     # Insert the text and the vector embeddings into the vector database
     with conn.cursor() as cur:
-        cur.execute(insert_to_vector_query, (text, vector_embeddings))
+        cur.execute(insert_to_vector_query, (text, vector_embeddings_blob))
         conn.commit()
 
-    use_vector_search_agent(tokenized_text, vector_embeddings)
+    use_vector_search_agent(tokenized_text, vector_embeddings_blob)
 
-async def use_vector_search_agent(text, vector_embeddings):
+async def use_vector_search_agent(text, vector_embeddings_blob):
     # Create a context if needed
     ctx = Context()
     ctx.logger.info(f"Using {vector_search_agent.name} for text: {text}")
@@ -68,7 +84,7 @@ async def use_vector_search_agent(text, vector_embeddings):
     # For example, you might send a query to the agent and get a response
     query = {
         "text": text,
-        "vector": vector_embeddings
+        "vector": vector_embeddings_blob
     }
     response = await vector_search_agent.query(query)
     return response
