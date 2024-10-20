@@ -8,13 +8,29 @@ import {
   usePublish,
   useRemoteUsers,
 } from "agora-rtc-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useRTCClient, useClientEvent } from "agora-rtc-react";
+
 export const Basics = () => {
   const appId = import.meta.env.VITE_AGORA_APP_ID;
   const token = import.meta.env.VITE_AGORA_APP_TOKEN;
+  const customerKey = import.meta.env.AGORA_CUSTOMER_KEY;
+  const customerSecret = import.meta.env.AGORA_CUSTOMER_SECRET;
   const [calling, setCalling] = useState(false);
   const isConnected = useIsConnected(); // Store the user's connection status
   const [channel, setChannel] = useState("");
+  const [builderToken, setBuilderToken] = useState("");
+  const [taskId, setTaskId] = useState("");
+  const [transcription, setTranscription] = useState("");
+
+  const { client } = useRTCClient(); // Get the client object
+
+  useClientEvent(client, "stream-message", (uid, payload) => { 
+    console.log(`received data stream message from ${uid}: `, payload);
+
+    setTranscription(payload.text);
+  });
 
   useJoin({appid: appId, channel: channel, token: token ? token : null}, calling);
 
@@ -25,6 +41,75 @@ export const Basics = () => {
   usePublish([localMicrophoneTrack, localCameraTrack]);
 
   const remoteUsers = useRemoteUsers();
+
+  useEffect(() => {
+    // Fetch the builder token once the connection is established
+    const fetchBuilderToken = async () => {
+      if (isConnected) {
+        try {
+          const response = await axios.post(
+            `https://api.agora.io/v1/projects/${appId}/rtsc/speech-to-text/builderTokens`,
+            { instanceId: channel },
+            {
+              auth: {
+                username: "11e18849071c4fcf8ee438073381a8a1",
+                password: "6b3600168a114a289300ba72ec4e404d",
+              },
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            },
+          );
+
+          setBuilderToken(response.data.tokenName);
+          console.log("Builder Token: ", response.data.tokenName);
+        } catch (error) {
+          console.error("Error fetching builder token: ", error);
+        }
+      }
+    };
+
+    fetchBuilderToken();
+  }, [isConnected]);
+
+  // useEffect(() => {
+  //   const startTranscription = async () => {
+  //     if (!isConnected || !builderToken) return;
+  //     try {
+  //       const startResponse = await axios.post(
+  //         `https://api.agora.io/v1/projects/${appId}/rtsc/speech-to-text/tasks?builderToken=${builderToken}`,
+  //         {
+  //           languages: ["en-US"],
+  //           maxIdleTime: 60,
+  //           rtcConfig: {
+  //             channelName: channel,
+  //             subBotUid: "777",
+  //             subBotToken: "007lnoquitehr98ter89hdfnvfdvdfvdf",
+  //             pubBotUid: "666",
+  //             pubBotToken: "007lnoquitehr98ter89hdfnvfdvdfvdf",
+  //           }
+  //         },
+  //         {
+  //           auth: {
+  //             username: "11e18849071c4fcf8ee438073381a8a1",
+  //             password: "6b3600168a114a289300ba72ec4e404d",
+  //           },
+  //           headers: {
+  //             'Content-Type': 'application/json',
+  //           }
+  //         },
+  //       )
+        
+  //       console.log(channel, builderToken);
+  //       setTaskId(startResponse.data.taskId);
+  //       console.log("Start Response: ", startResponse.data.taskId);
+  //     } catch (error) {
+  //       console.error("Error starting transcription: ", error);
+  //     }
+  //   }
+
+  //   startTranscription();
+  // }, [isConnected, builderToken]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
@@ -97,6 +182,7 @@ export const Basics = () => {
           >
             {calling ? '📞' : '📞'}
           </button>
+          <h1>{transcription}</h1>
         </div>
       )}
     </div>
@@ -104,3 +190,4 @@ export const Basics = () => {
 };
 
 export default Basics;
+// U1hyQUPyr1hDB59gaWhYIDxsAs8Bx2cySMPcRakb3Uh5CogqyLSIUKkNwEeIXL6HuTZUHdJG97eSl3UP4KDX49OD7LwcsWTyZUqS03bjVfl5QOOYzzecOk5qW7Fd9R523nLfQG3Yq561yzqapNeJHXGL-F5Z9MLv4-ejrN2_OFjozg_MIhk4XqyA0eyN-WYkdZBgXxGCRUVU7d6oYB1N9S4W_Pe10vPUnwaR5g2_6Vg
