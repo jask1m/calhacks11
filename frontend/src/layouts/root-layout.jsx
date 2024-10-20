@@ -16,11 +16,11 @@ export default function RootLayout() {
       routerReplace={(to) => navigate(to, { replace: true })}
       publishableKey={PUBLISHABLE_KEY}
     >
-      <div className="flex flex-col min-h-screen">
-        <header className="bg-gray-800 text-white shadow-md">
+      <div className="flex flex-col min-h-screen bg-white text-gray-900">
+        <header className="bg-white border-b border-gray-200 shadow-sm">
           <nav className="container mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link to="/" className="text-xl font-bold hover:text-gray-300 transition-colors">
+              <Link to="/" className="text-xl font-bold hover:text-gray-600 transition-colors">
                 MeetAI
               </Link>
             </div>
@@ -37,7 +37,7 @@ export default function RootLayout() {
               <SignedOut>
                 <Link 
                   to="/sign-in" 
-                  className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition-colors"
+                  className="bg-white text-gray-900 border border-gray-300 hover:bg-gray-100 font-semibold py-2 px-4 rounded transition-colors"
                 >
                   Sign In
                 </Link>
