@@ -1,7 +1,7 @@
 import singlestoredb as s2
 from openai import OpenAI
 import os
-import asyncio
+from meeting_agents import vector_search_agent
 
 username = os.getenv('S2_USERNAME')
 password = os.getenv('S2_PASSWORD')
@@ -14,24 +14,45 @@ conn = s2.connect(connection_string)
 
 client = OpenAI()
 
-cur = conn.cursor()
 
+def create_and_insert_embeddings(text, model="text-embedding-ada-002"):   
+    response = client.embeddings.create(
+        model="text-embedding-ada-002",
+        input=text
+    )
 
-def insert_embedding(text, embedding):
-    # SQL query to insert text and embeddings into the myvectortable
-    insert_query = """
-    INSERT INTO myvectortable (text, vector)
-    VALUES (%s, %s);
+    # Extract the embedding from the response
+    vector_embeddings = response['data'][0]['embedding']
+
+    print(vector_embeddings)
+
+    insert_to_vector_query = """
+        INSERT INTO myvectortable (text, vector) VALUES (%s, %s);
     """
-    cur.execute(insert_query, (text, embedding))
-    conn.commit()
+
+    # Insert the text and the vector embeddings into the vector database
+    with conn.cursor() as cur:
+        cur.execute(insert_to_vector_query, (text, vector_embeddings))
+        conn.commit()
+
+    use_vector_search_agent(text, vector_embeddings)
+
+async def use_vector_search_agent(text, vector_embeddings):
+    # Create a context if needed
+    ctx = Context()
+    ctx.logger.info(f"Using {vector_search_agent.name} for text: {text}")
+    # Add your vector search logic here
+    # For example, you might send a query to the agent and get a response
+    query = {
+        "text": text,
+        "vector": vector_embeddings
+    }
+    response = await vector_search_agent.query(query)
+    return response
 
 
 
-def create_embeddings(model="text-embedding-3-small"):
-   # SQL query to select the newly updated text from the transcriptions table
-   select_query = """
-   SELECT text FROM transcriptions WHERE id = (SELECT MAX(transcription_id) FROM transcriptions);
-   """
-   text = cur.execute(select_query)
-   return client.embeddings.create(input = [text], model=model).data[0].embedding
+
+
+
+
