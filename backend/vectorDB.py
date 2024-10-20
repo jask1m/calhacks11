@@ -8,6 +8,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from confluent_kafka import Consumer, KafkaError
 import tiktoken  # Assuming this is correctly imported for the tokenizer
+import singlestoredb as s2
 
 load_dotenv()
 

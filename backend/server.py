@@ -7,6 +7,7 @@ from uagents.envelope import Envelope
 import singlestoredb as s2
 from pydantic import BaseModel
 import os
+import singlestoredb as s2
 import uvicorn
 from dotenv import load_dotenv
 from vectorDB import create_and_insert_embeddings
@@ -124,5 +125,5 @@ async def create_user(user: User):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-if name == "main":
+if __name__ == "main":
     uvicorn.run("server:app", port=8000, reload=True)
