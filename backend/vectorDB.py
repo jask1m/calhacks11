@@ -1,10 +1,10 @@
 import singlestoredb as s2
-from openai import OpenAI
 import tiktoken
 import os
 from meeting_agents import vector_search_agent
 from uagents import Context
 from dotenv import load_dotenv
+from openai import OpenAI
 
 load_dotenv()
 
@@ -18,6 +18,22 @@ connection_string = f"{username}:{password}@{host}:{port}/{database}"
 conn = s2.connect(connection_string)
 tokenizer = tiktoken.encoding_for_model("text-embedding-ada-002")
 
+
+def test_embeddings(text, model="text-embedding-ada-002"):
+    client = OpenAI(
+    # This is the default and can be omitted
+        api_key=os.environ.get("OPEN_AI_API_KEY"),
+    )
+    # Call the OpenAI API to get the embeddings
+    response = client.embeddings.create(
+        input=text,
+        model=model
+    )
+    
+    # Extract the embeddings from the response
+    print(response.data[0].embedding)
+    
+
 def create_and_insert_embeddings(text, model="text-embedding-ada-002"):   
     client = OpenAI()
     tokens = tokenizer.encode(text)
@@ -28,8 +44,8 @@ def create_and_insert_embeddings(text, model="text-embedding-ada-002"):
         input=tokenizer.decode(tokens)
     )
 
-    # Extract the embedding from the response
-    vector_embeddings = response['data'][0]['embedding']
+    
+    vector_embeddings = response.data[0].embedding
 
     print(vector_embeddings)
 
@@ -58,6 +74,10 @@ async def use_vector_search_agent(text, vector_embeddings):
     return response
 
 
+if __name__ == "__main__":
+    text = "Hello, how are you?"
+    result = test_embeddings(text)
+    print(result)
 
 
 
