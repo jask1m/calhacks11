@@ -5,6 +5,7 @@ import os
 import singlestoredb as s2
 from typing import List 
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -103,7 +104,6 @@ async def handle_notes(ctx: Context, response: Response):
 
     ctx.logger.info(f"Combined text from embeddings: {combined_text}")
 
-    # TO DO: INSERT NOTES INTO NOTES TABLE
 
     # Configure the Gemini model
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -122,12 +122,23 @@ async def handle_notes(ctx: Context, response: Response):
     """
 
     # Generate the notes using the Gemini model
-    generated_notes = model.generate(input_prompt)
+    generated_notes = model.generate_content(input_prompt)
 
     # Prepare the notes
     notes = {
         "notes": generated_notes
     }
+
+    insert_query = """
+        INSERT INTO notes VALUES (%s, %s, %s)
+    """
+    
+    with conn.cursor() as cur:
+        cur.execute('SELECT MAX(note_id) FROM meeting_notes')
+        highest_note_id = cur.fetchone()[0] + 1
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cur.execute(insert_query, (highest_note_id, generated_notes, current_time))
+        conn.commit()
 
     ctx.logger.info(f"Generated notes: {generated_notes}")
     return notes
