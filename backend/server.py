@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 from vectorDB import create_and_insert_embeddings
 from confluent_kafka import Producer, KafkaError
 
-
 load_dotenv()
 
 username = os.getenv('S2_USERNAME')
@@ -21,12 +20,18 @@ host = os.getenv('S2_HOST')
 port = os.getenv('S2_PORT')
 database = os.getenv('S2_DATABASE')
 
-connection_string = f"{username}:{password}@{host}:{port}/{database}"
-conn = s2.connect(connection_string)
+if not all([port, database, username, password, host]):
+    raise EnvironmentError("One or more environment variables are not set.")
 
+connection_string = f"{username}:{password}@{host}:{port}/{database}"
+try:
+    conn = s2.connect(connection_string)
+except Exception as e:
+    print(f"Failed to connect to the database: {e}")
+    raise
 
 class ConnectionManager:
-    def __init__(self):
+    def init(self):
         self.active_connections: List[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
@@ -51,12 +56,12 @@ class Request(Model):
 
 app = FastAPI()
 
-origins = ["*"]
+origins = [""]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=[""],
     allow_headers=["*"],
 )
 
@@ -82,19 +87,21 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            data = await websocket.receive_text()  # Transcription message
-            print(f"Message received: {data}")
-            # Produce Kafka message
+            data = await websocket.receive_text()
+            print(f"Received message: {data}")
             producer.produce('transcription-topic', data.encode('utf-8'), callback=delivery_report)
-            producer.flush()  # Ensure the message is delivered to Kafka
-            await websocket.send_text(f"Message received and sent to Kafka.")
+            producer.flush()  # Ensure the message is sent
     except WebSocketDisconnect:
-        print("Client disconnected")
+        print("WebSocket disconnected")
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        await websocket.close()
+        print("WebSocket connection closed")
 
 @app.get("/")
 def read_root():
     return "Hello from the Agent controller"
-
 
 @app.post("/query-agent")
 async def make_agent_call(req: Request):
@@ -117,7 +124,5 @@ async def create_user(user: User):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-if __name__ == "__main__":
+if name == "main":
     uvicorn.run("server:app", port=8000, reload=True)
-
