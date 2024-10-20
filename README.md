@@ -1,4 +1,5 @@
 # MeetAI
+![Screenshot 2024-10-20 110257](https://github.com/user-attachments/assets/3ac8c4b2-250a-4031-8ec5-5b0360d028bd)
 
 In today's fast-paced environment, video calls often lead to important discussions and decisions. However, for hosts, generating new ideas to engage the audience can be challenging at times, and taking notes during a presentation can be inconvenient. Manual summarization often misses critical details.
 
