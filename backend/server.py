@@ -1,5 +1,5 @@
 import json
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from uagents import Model
 from uagents.query import query
@@ -7,6 +7,10 @@ from uagents.envelope import Envelope
 import singlestoredb as s2
 from pydantic import BaseModel
 import os
+import uvicorn
+from dotenv import load_dotenv
+
+load_dotenv()
 
 username = os.getenv('S2_USERNAME')
 password = os.getenv('S2_PASSWORD')
@@ -16,9 +20,6 @@ database = os.getenv('S2_DATABASE')
 
 connection_string = f"{username}:{password}@{host}:{port}/{database}"
 conn = s2.connect(connection_string)
- 
-AUDIENCE_FEEDBACK_AGENT_ADDRESS = "agent1qfs4klegx9nmuaaxd26payed2uawzx94uemg7huvh6p86aw8l3z0xcy8su2"
-SENTIMENT_ANALYSIS_AGENT_ADDRESS = "agent1qgr4n3yuftz9rhe939kchwkvuctdyk5r7k98ujxdkmu63nthjswfcaa8jkk" 
 
 class User(BaseModel):
     user_id: int
@@ -39,10 +40,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.get("/")
-def root():
-    return({"message": "hello word"})
 
 @app.get("/")
 def read_root():

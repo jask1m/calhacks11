@@ -3,6 +3,10 @@ from typing import Dict, Any
 import google.generativeai as genai
 import os
 import singlestoredb as s2
+from typing import List 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 username = os.getenv('S2_USERNAME')
 password = os.getenv('S2_PASSWORD')
@@ -19,11 +23,6 @@ class Response(Model):
 class Notes(Model):
     notes: str
 
-context_agent = Agent(
-    name = "Context Agent",
-    seed = "Context Agent recovery phrase"
-)
-
 notes_agent = Agent(
     name = "Note taking Agent",
     seed = "Note taking Agent recovery phrase"
@@ -38,6 +37,11 @@ vector_search_agent = Agent(
 async def startup(ctx: Context):
     ctx.logger.info(f"Starting up {notes_agent.name}")
     ctx.logger.info(f"With address: {notes_agent.address}")
+
+@vector_search_agent.on_event("startup")
+async def startup(ctx: Context):
+    ctx.logger.info(f"Starting up {vector_search_agent.name}")
+    ctx.logger.info(f"With address: {vector_search_agent.address}")
 
 @vector_search_agent.on_query(model=Response)
 async def vector_search(ctx: Context, response: Response, query: dict):
@@ -99,6 +103,8 @@ async def handle_notes(ctx: Context, response: Response):
 
     ctx.logger.info(f"Combined text from embeddings: {combined_text}")
 
+    # TO DO: INSERT NOTES INTO NOTES TABLE
+
     # Configure the Gemini model
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
     model = genai.GenerativeModel('models/gemini-1.5-pro-latest')
@@ -126,5 +132,10 @@ async def handle_notes(ctx: Context, response: Response):
     ctx.logger.info(f"Generated notes: {generated_notes}")
     return notes
     
+bureau = Bureau()
+bureau.add(notes_agent)
+bureau.add(vector_search_agent)
+ 
+if __name__ == "__main__":
+    bureau.run()
 
-    
