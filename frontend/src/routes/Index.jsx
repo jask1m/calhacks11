@@ -5,7 +5,7 @@ export default function IndexPage() {
     <div className="h-full pt-20 bg-white flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl w-full space-y-8 text-center">
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 tracking-tight">
-          Video Calls <br /><i>Supercharged</i>
+          Video Calls <br /><i>AI Supercharged</i>
         </h1>
         <p className="mt-3 text-xl text-gray-500 sm:mt-4">
           Real-time context, notes, and reference for your meetings and conversations
